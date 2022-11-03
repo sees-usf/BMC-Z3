@@ -1,3 +1,4 @@
+#multi-threaded program sat solving C code for the above program
 from bmc import *
 from z3 import *
 bmchecker = bmc()
@@ -29,41 +30,39 @@ bmchecker.add_initial_state_enc(state0_enc)
 
 
 #thread 1
-thr1 = Or(And(pc_thrd1 == 0, flag1 == 1, Not(flag2 < 1), flag1_x == 1, pc_thrd1_x == 1),
-        And(pc_thrd1 == 0, flag1 == 1, flag2 < 1, flag1_x == flag1, turn_x == turn, pc_thrd1 == 3),
-        And(pc_thrd1 == 1, flag1 == 1, Not(flag2 < 1), Not(turn == 0), pc_thrd1_x == 2),
-        And(pc_thrd1 == 1, flag1 == 1, Not(flag2 < 1), turn == 0, flag1_x == flag1, pc_thrd1_x == 3),
-        And(pc_thrd1 == 2, flag1 == 1, Not(flag2 < 1), Not(turn == 0), flag1_x == 0, turn_x == turn, pc_thrd1_x == 2),
-        And(pc_thrd1 == 2, flag1 == 0, Not(flag2 < 1), turn == 0, flag1_x == 1, turn_x == turn, pc_thrd1_x == 3),
-        And(pc_thrd1 == 3, flag1 == 1, x == 0, x_x <= 0, turn == 0, flag1_x == 0, turn_x == 1, pc_thrd1_x == 0))
+thr1 = Or(And(pc_thrd1 == 0, flag1 == 0, flag1_x == 1, flag2 >= 1, pc_thrd1_x == 1),
+        And(pc_thrd1 == 0, flag1 == 0, flag1_x == 1, flag2 < 1, pc_thrd1 == 3),
+        And(pc_thrd1 == 1, flag1 == 1, flag2 >= 1, Not(turn == 0), flag1_x == 0, turn_x == turn, pc_thrd1_x == 2),
+        And(pc_thrd1 == 1, flag1 == 1, flag2 >= 1, turn == 0, flag1_x == flag1, pc_thrd1_x == 3),
+        And(pc_thrd1 == 2, flag1 == 0, flag2 >= 1, Not(turn == 0), flag1_x == 0, turn_x == turn, pc_thrd1_x == 2),
+        And(pc_thrd1 == 2, flag1 == 0, flag2 >= 1, turn == 0, flag1_x == 1, turn_x == turn, pc_thrd1_x == 3),
+        And(pc_thrd1 == 3, flag1 == 1, turn == 0, x<=0, x_x == 0, flag1_x == 0, turn_x == 1, flag2_x == 1, pc_thrd1_x == 0))
 
 
 #thread 2
-thr2 = Or(And(pc_thrd2 == 0, flag2 == 1, Not(flag1 < 1), flag2_x == 1, pc_thrd2_x == 1),
-        And(pc_thrd2 == 0, flag2 == 1, flag1 < 1, flag2_x == flag2, turn_x == turn, pc_thrd2 == 3),
-        And(pc_thrd2 == 1, flag2 == 1, Not(flag1 < 1), Not(turn == 1), pc_thrd2_x == 2),
-        And(pc_thrd2 == 1, flag2 == 1, Not(flag1 < 1), turn == 1, flag2_x == flag2, pc_thrd2_x == 3),
-        And(pc_thrd2 == 2, flag2 == 1, Not(flag1 < 1), Not(turn == 1), flag2_x == 0, turn_x == turn, pc_thrd2_x == 2),
-        And(pc_thrd2 == 2, flag2 == 0, Not(flag1 < 1), turn == 1, flag2_x == 1, turn_x == turn, pc_thrd2_x == 3),
-        And(pc_thrd2 == 3, flag2 == 1, x == 1, x_x >= 1, turn == 1, flag2_x == 0, turn_x == 1, pc_thrd2_x == 0))
+thr2 = Or(And(pc_thrd2 == 0, flag2 == 0, flag2_x == 1, Not(flag1 < 1), pc_thrd2_x == 1),
+        And(pc_thrd2 == 0, flag2 == 0, flag2_x == 1, flag1 < 1, pc_thrd2 == 3),
+        And(pc_thrd2 == 1, flag2 == 1, flag1 >= 1, Not(turn == 1), flag2_x == 0, turn_x == turn, pc_thrd2_x == 2),
+        And(pc_thrd2 == 1, flag2 == 1, flag1 >= 1, turn == 1, flag2_x == flag2, pc_thrd2_x == 3),
+        And(pc_thrd2 == 2, flag2 == 0, flag1 >= 1, Not(turn == 1), flag2_x == 0, turn_x == turn, pc_thrd2_x == 2),
+        And(pc_thrd2 == 2, flag2 == 0, flag1 >= 1, turn == 1, flag2_x == 1, turn_x == turn, pc_thrd2_x == 3),
+        And(pc_thrd2 == 3, flag2 == 1, turn == 1, x>=1, x_x == 1, flag2_x == 0, turn_x == 1, flag1_x == 1, pc_thrd2_x == 0))
 
 
 
 
 
-
-all_thrds = And((And(0<=pid, pid<=1),
-            Or(And(0<=turn, turn<=1),
-            And(pid == 0, turn == 1, thr1, pc_thrd2 == pc_thrd2_x),
-            And(pid == 1, turn == 0, thr2, pc_thrd1 == pc_thrd1_x))))
+all_thrds = And(And(0<=pid, pid<=1),
+            Or(And(pid == 0, turn == 1, thr1, pc_thrd2 == pc_thrd2_x),
+            And(pid == 1, turn == 0, thr2, pc_thrd1 == pc_thrd1_x)))
 
 
 
 bmchecker.add_transition_enc(all_thrds)
 
-bmchecker.add_property_enc(Not(And(0>=x, x<=1)))
+bmchecker.add_property_enc(Not(And(0<=x, x<=1)))
 
-status, step = bmchecker.run(100)
+status, step = bmchecker.run(2000)
 if status is sat:
     trace = bmchecker.get_trace(step)
     print('Error trace is printed below:')
