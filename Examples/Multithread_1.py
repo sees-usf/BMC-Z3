@@ -41,7 +41,7 @@ flag2 = 0;
 """
 #multi-threaded program sat solving C code for the above program
 from bmc import *
-from z3 import *
+
 bmchecker = bmc()
 
 #list of state variables declared for this model
@@ -64,7 +64,11 @@ x_x = variables_enc_1[4]
 turn_x = variables_enc_1[5]
 
 
-state0_enc = And(Or(x == 0, x == 1), (flag1 == 0), (flag2 == 0), (turn == 0), (pc_thrd1 == 0), (pc_thrd2 == 0), (pid == 0))
+# bound variable x within range -1, 2
+tr_inv = And(x>=1, x<=2, x_x>=1, x_x<=2)
+
+
+state0_enc = And((flag1 == 0), (flag2 == 0), (turn == 0), (pc_thrd1 == 0), (pc_thrd2 == 0))
 
 bmchecker.add_initial_state_enc(state0_enc)
 
@@ -79,48 +83,43 @@ def nochange(l, r):
     return a
 
 
-
 #thread 1
 thr1 = Or(And(pc_thrd1 == 0, flag1_x == 1, pc_thrd1_x == 1, nochange(flag2, flag2_x), nochange(turn, turn_x), nochange(x, x_x), pc_thrd2 == pc_thrd2_x),
-    And(pc_thrd1 == 1, flag2 < 1, pc_thrd1 == 6, nochange(flag1, flag1_x),  nochange(turn, turn_x), nochange(x, x_x), pc_thrd2 == pc_thrd2_x),
+    And(pc_thrd1 == 1, flag2 < 1, pc_thrd1_x == 6, nochange(flag1, flag1_x),  nochange(turn, turn_x), nochange(x, x_x), pc_thrd2 == pc_thrd2_x),
     And(pc_thrd1 == 1, flag2 >= 1, pc_thrd1_x == 2, nochange(flag1, flag1_x), nochange(turn, turn_x), nochange(x, x_x), pc_thrd2 == pc_thrd2_x),
     And(pc_thrd1 == 2, turn == 0, pc_thrd1_x == 6, nochange(flag2, flag2_x), nochange(flag1, flag1_x), nochange(x, x_x), pc_thrd2 == pc_thrd2_x),
-    And(pc_thrd1 == 2, Not(turn == 0), pc_thrd1 == 3, nochange(flag2, flag2_x), nochange(flag1, flag1_x), nochange(x, x_x), pc_thrd2 == pc_thrd2_x),
-    And(pc_thrd1 == 3, flag2 == 0, pc_thrd1 == 4, nochange(flag1, flag1_x), nochange(turn, turn_x), nochange(x, x_x), pc_thrd2 == pc_thrd2_x),
-    And(pc_thrd1 == 4, turn == 0, pc_thrd1 == 5, nochange(flag2, flag2_x), nochange(flag1, flag1_x), nochange(x, x_x), pc_thrd2 == pc_thrd2_x),
-    And(pc_thrd1 == 4, Not(turn == 0), pc_thrd1 == 4, nochange(flag2, flag2_x), nochange(flag1, flag1_x), nochange(x, x_x), pc_thrd2 == pc_thrd2_x),
-    And(pc_thrd1 == 5, flag1 == 1, pc_thrd1 == 6, nochange(flag2, flag2_x), nochange(turn, turn_x), nochange(x, x_x), pc_thrd2 == pc_thrd2_x),
-    And(pc_thrd1 == 6, x == 0, pc_thrd1 == 7, nochange(flag2, flag2_x), nochange(turn, turn_x), nochange(flag1, flag1_x), pc_thrd2 == pc_thrd2_x),
-    And(pc_thrd1 == 7, turn == 1, pc_thrd1 == 8, nochange(flag2, flag2_x), nochange(flag1, flag1_x), nochange(x, x_x), pc_thrd2 == pc_thrd2_x),
-    And(pc_thrd1 == 8, flag1 == 0, pc_thrd1 == 0, nochange(flag2, flag2_x), nochange(turn, turn_x), nochange(x, x_x), pc_thrd2 == pc_thrd2_x))
+    And(pc_thrd1 == 2, Not(turn == 0), pc_thrd1_x == 3, nochange(flag2, flag2_x), nochange(flag1, flag1_x), nochange(x, x_x), pc_thrd2 == pc_thrd2_x),
+    And(pc_thrd1 == 3, flag2_x == 0, pc_thrd1_x == 4, nochange(flag1, flag1_x), nochange(turn, turn_x), nochange(x, x_x), pc_thrd2 == pc_thrd2_x),
+    And(pc_thrd1 == 4, turn == 0, pc_thrd1_x == 5, nochange(flag2, flag2_x), nochange(flag1, flag1_x), nochange(x, x_x), pc_thrd2 == pc_thrd2_x),
+    And(pc_thrd1 == 4, Not(turn == 0), pc_thrd1_x == 4, nochange(flag2, flag2_x), nochange(flag1, flag1_x), nochange(x, x_x), pc_thrd2 == pc_thrd2_x),
+    And(pc_thrd1 == 5, flag1_x == 1, pc_thrd1_x == 6, nochange(flag2, flag2_x), nochange(turn, turn_x), nochange(x, x_x), pc_thrd2 == pc_thrd2_x),
+    And(pc_thrd1 == 6, x_x == x+1, pc_thrd1_x == 7, nochange(flag2, flag2_x), nochange(turn, turn_x), nochange(flag1, flag1_x), pc_thrd2 == pc_thrd2_x),
+    And(pc_thrd1 == 7, turn_x == 1, pc_thrd1_x == 8, nochange(flag2, flag2_x), nochange(flag1, flag1_x), nochange(x, x_x), pc_thrd2 == pc_thrd2_x),
+    And(pc_thrd1 == 8, flag1_x == 0, pc_thrd1_x == 0, nochange(flag2, flag2_x), nochange(turn, turn_x), nochange(x, x_x), pc_thrd2 == pc_thrd2_x))
 
 
 #thread 2
-
 thr2 = Or(And(pc_thrd1 == 0, flag2_x == 1, pc_thrd2_x == 1, nochange(flag1, flag1_x), nochange(turn, turn_x), nochange(x, x_x), pc_thrd1 == pc_thrd1_x),
-        And(pc_thrd2 == 1, flag1 < 1, pc_thrd2 == 6, nochange(flag2, flag2_x), nochange(turn, turn_x), nochange(x, x_x), pc_thrd1 == pc_thrd1_x),
+        And(pc_thrd2 == 1, flag1 < 1, pc_thrd2_x == 6, nochange(flag2, flag2_x), nochange(turn, turn_x), nochange(x, x_x), pc_thrd1 == pc_thrd1_x),
         And(pc_thrd2 == 1, flag1 >= 1, pc_thrd2_x == 2, nochange(flag2, flag2_x), nochange(turn, turn_x), nochange(x, x_x), pc_thrd1 == pc_thrd1_x),
         And(pc_thrd2 == 2, turn == 1, pc_thrd2_x == 6, nochange(flag1, flag1_x), nochange(flag2, flag2_x), nochange(x, x_x), pc_thrd1 == pc_thrd1_x),
-        And(pc_thrd2 == 2, Not(turn == 1), pc_thrd2 == 3, nochange(flag1, flag1_x), nochange(flag2, flag2_x), nochange(x, x_x), pc_thrd1 == pc_thrd1_x),
-        And(pc_thrd2 == 3, flag1 == 0, pc_thrd2 == 4, nochange(flag2, flag2_x), nochange(turn, turn_x), nochange(x, x_x), pc_thrd1 == pc_thrd1_x),
-        And(pc_thrd2 == 4, turn == 1, pc_thrd2 == 5, nochange(flag1, flag1_x), nochange(flag2, flag2_x), nochange(x, x_x), pc_thrd1 == pc_thrd1_x),
-        And(pc_thrd2 == 4, Not(turn == 1), pc_thrd2 == 4, nochange(flag1, flag1_x), nochange(flag2, flag2_x), nochange(x, x_x), pc_thrd1 == pc_thrd1_x),
-        And(pc_thrd2 == 5, flag2 == 1, pc_thrd2 == 6, nochange(flag1, flag1_x), nochange(turn, turn_x), nochange(x, x_x), pc_thrd1 == pc_thrd1_x),
-        And(pc_thrd2 == 6, x == 0, pc_thrd2 == 7, nochange(flag1, flag1_x), nochange(turn, turn_x), nochange(flag2, flag2_x), pc_thrd1 == pc_thrd1_x),
-        And(pc_thrd2 == 7, turn == 0, pc_thrd2 == 8, nochange(flag1, flag1_x), nochange(flag2, flag2_x), nochange(x, x_x), pc_thrd1 == pc_thrd1_x),
-        And(pc_thrd2 == 8, flag2 == 0, pc_thrd2 == 0, nochange(flag1, flag1_x), nochange(turn, turn_x), nochange(x, x_x), pc_thrd1 == pc_thrd1_x))
+        And(pc_thrd2 == 2, Not(turn == 1), pc_thrd2_x == 3, nochange(flag1, flag1_x), nochange(flag2, flag2_x), nochange(x, x_x), pc_thrd1 == pc_thrd1_x),
+        And(pc_thrd2 == 3, flag2_x == 0, pc_thrd2_x == 4, nochange(flag2, flag2_x), nochange(turn, turn_x), nochange(x, x_x), pc_thrd1 == pc_thrd1_x),
+        And(pc_thrd2 == 4, turn == 1, pc_thrd2_x == 5, nochange(flag1, flag1_x), nochange(flag2, flag2_x), nochange(x, x_x), pc_thrd1 == pc_thrd1_x),
+        And(pc_thrd2 == 4, Not(turn == 1), pc_thrd2_x == 4, nochange(flag1, flag1_x), nochange(flag2, flag2_x), nochange(x, x_x), pc_thrd1 == pc_thrd1_x),
+        And(pc_thrd2 == 5, flag2_x == 1, pc_thrd2_x == 6, nochange(flag1, flag1_x), nochange(turn, turn_x), nochange(x, x_x), pc_thrd1 == pc_thrd1_x),
+        And(pc_thrd2 == 6, x_x == x+1, pc_thrd2_x == 7, nochange(flag1, flag1_x), nochange(turn, turn_x), nochange(flag2, flag2_x), pc_thrd1 == pc_thrd1_x),
+        And(pc_thrd2 == 7, turn_x == 1, pc_thrd2_x == 8, nochange(flag1, flag1_x), nochange(flag2, flag2_x), nochange(x, x_x), pc_thrd1 == pc_thrd1_x),
+        And(pc_thrd2 == 8, flag2_x == 0, pc_thrd2_x == 0, nochange(flag1, flag1_x), nochange(turn, turn_x), nochange(x, x_x), pc_thrd1 == pc_thrd1_x))
 
 
 
-all_thrds = And(And(0<=pid, pid<=1),
-            Or(And(pid == 0,thr1, pc_thrd2 == pc_thrd2_x),
-            And(pid == 1, thr2, pc_thrd1 == pc_thrd1_x)))
-
+all_thrds = And(Or(And(thr1, pc_thrd2 == pc_thrd2_x), And(thr2, pc_thrd1 == pc_thrd1_x)), tr_inv)
 
 
 bmchecker.add_transition_enc(all_thrds)
 
-bmchecker.add_property_enc(And(0<=x, x<=1))
+bmchecker.add_property_enc(Or(x<0, x>1))
 
 status, step = bmchecker.run(2000)
 if status is sat:
